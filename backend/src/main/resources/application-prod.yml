@@ -1,0 +1,33 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://postgres:5432/encuestas}
+    username: ${POSTGRES_USER:encuestas}
+    password: ${POSTGRES_PASSWORD:encuestas}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://encuestas:encuestas@mongo:27017/encuestas?authSource=admin}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# En prod local, asumiremos que serviremos Angular en 8081 (ajústalo si difiere)
+app:
+  cors:
+    allowed-origins: "http://localhost:8081"
+
+logging:
+  level:
+    root: INFO

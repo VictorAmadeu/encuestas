@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: encuestas-app
+  profiles:
+    active: dev   # Usaremos 'dev' por defecto
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+# Propiedad propia para CORS (la usará nuestro WebConfig)
+app:
+  cors:
+    allowed-origins: "http://localhost:4200"
