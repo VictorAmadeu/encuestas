@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16
+    platform: linux/amd64
+    container_name: encuestas-postgres
+    environment:
+      POSTGRES_DB: encuestas
+      POSTGRES_USER: encuestas
+      POSTGRES_PASSWORD: encuestas
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U encuestas -d encuestas || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:7
+    platform: linux/amd64
+    container_name: encuestas-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: encuestas
+      MONGO_INITDB_ROOT_PASSWORD: encuestas
+      MONGO_INITDB_DATABASE: encuestas
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand({ ping: 1 })"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  dbdata:
+  mongodata:

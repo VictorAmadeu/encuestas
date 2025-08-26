@@ -1,34 +1,44 @@
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/encuestas
-    username: encuestas
-    password: encuestas
-  jpa:
-    hibernate:
-      ddl-auto: validate       # Validamos esquema (las tablas las creará Flyway)
-    open-in-view: false
-  data:
-    mongodb:
-      uri: mongodb://encuestas:encuestas@localhost:27017/encuestas?authSource=admin
+server:                           # Bloque de configuración del servidor embebido (Tomcat por defecto)
+  port: 8080                      # Puerto HTTP para entorno de desarrollo
 
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
+spring:                           # Raíz de propiedades de Spring Boot
+  datasource:                     # Configuración de la fuente de datos (PostgreSQL)
+    url: jdbc:postgresql://localhost:5432/encuestas   # URL JDBC apuntando al Postgres del docker-compose
+    username: encuestas           # Usuario de la BD (definido en docker-compose)
+    password: encuestas           # Contraseña de la BD (definida en docker-compose)
+  jpa:                            # Configuración de JPA/Hibernate
+    hibernate:                    # Propiedades específicas de Hibernate
+      ddl-auto: validate          # No crea ni altera tablas; solo valida contra el esquema creado por Flyway
+    open-in-view: false           # Desactiva Open Session in View para evitar sesiones largas y fugas
+    properties:                   # Propiedades adicionales de Hibernate
+      hibernate:                  # Subárbol de propiedades de Hibernate
+        format_sql: true          # Formatea el SQL en logs para que sea más legible
+        jdbc:                     # Propiedades JDBC a nivel de Hibernate
+          time_zone: UTC          # Fuerza la zona horaria UTC en la conexión (consistencia en timestamps)
+  flyway:                         # Configuración de Flyway (migraciones)
+    enabled: true                 # Activa Flyway
+    locations: classpath:db/migration   # Carpeta donde viven los scripts (V1__...sql, etc.)
+    baseline-on-migrate: true     # Si el esquema ya tiene objetos previos, crea baseline al migrar (útil en dev)
+  data:                           # Configuración de módulos de Spring Data
+    mongodb:                      # Bloque de MongoDB
+      uri: mongodb://encuestas:encuestas@localhost:27017/encuestas?authSource=admin  # URI con credenciales del compose
 
-# Configuración de Swagger UI (springdoc)
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
+# Configuración de documentación OpenAPI/Swagger (springdoc)
+springdoc:                        # Raíz de springdoc-openapi
+  api-docs:                       # Endpoint del JSON de OpenAPI
+    path: /v3/api-docs            # Ruta para los docs en JSON
+  swagger-ui:                     # Interfaz Swagger UI
+    path: /swagger-ui.html        # Ruta de la UI (acceso vía http://localhost:8080/swagger-ui.html)
 
-# Configuración JWT (EJEMPLO — cambia el secreto en producción)
-jwt:
-  secret: "Enc0ntr4rUnS3cr3t0!"
-  accessTokenMinutes: 15
-  issuer: "encuestas-app"
+# Configuración JWT de ejemplo (NO usar este secreto en producción)
+jwt:                              # Bloque de propiedades personalizadas para JWT
+  secret: "Enc0ntr4rUnS3cr3t0!"   # Secreto para firmar tokens (cámbialo en prod; mejor por variable de entorno)
+  accessTokenMinutes: 15          # Minutos de validez del access token
+  issuer: "encuestas-app"         # Emisor que se incluirá en el claim 'iss' del token
 
-logging:
-  level:
-    org.springframework.security: INFO
-    org.hibernate.SQL: WARN
+logging:                          # Configuración de niveles de log
+  level:                          # Niveles por paquete/clase
+    org.springframework.security: INFO   # Seguridad a nivel informativo (suficiente en dev)
+    org.flywaydb: info                   # Logs de migración de Flyway (info para ver qué se aplica)
+    org.hibernate.SQL: debug             # Muestra el SQL ejecutado por Hibernate (útil al depurar)
+

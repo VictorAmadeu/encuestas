@@ -1,22 +1,28 @@
-spring:
-  application:
-    name: encuestas-app
-  profiles:
-    active: dev   # Usaremos 'dev' por defecto
+# =========================
+# Archivo: application.yml
+# Propósito: configuración base de Spring Boot
+# Nota: establecemos el perfil por defecto a 'dev'.
+# =========================
 
-server:
-  port: 8080
+spring: # Raíz de propiedades de Spring Boot
+  application: # Configuración propia de la aplicación
+    name: encuestas # Nombre lógico de la app (aparece en logs/Actuator). Antes: 'encuestas-app'
+  profiles: # Gestión de perfiles de Spring
+    default: dev # Perfil por defecto cuando NO se define SPRING_PROFILES_ACTIVE. Antes usabas 'active: dev'
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-  endpoint:
-    health:
-      show-details: when_authorized
+server: # Configuración del servidor embebido (Tomcat por defecto)
+  port: 8080 # Puerto HTTP. Suele usarse en dev; si lo defines también en application-dev.yml, ese tendrá prioridad
 
-# Propiedad propia para CORS (la usará nuestro WebConfig)
-app:
-  cors:
-    allowed-origins: "http://localhost:4200"
+management: # Configuración de Spring Boot Actuator
+  endpoints: # Conjunto de endpoints de administración
+    web: # Exposición vía HTTP
+      exposure: # Qué endpoints se exponen por HTTP
+        include: health,info # Exponemos solo 'health' e 'info' en dev (prudente para seguridad)
+  endpoint: # Ajustes finos por endpoint
+    health: # Endpoint de salud (/actuator/health)
+      show-details: when_authorized # Muestra detalles solo si el usuario está autorizado
+
+# Espacio de nombres propio para propiedades de negocio/personalizadas
+app: # Prefijo propio de la aplicación
+  cors: # Configuración CORS que usará tu WebConfig
+    allowed-origins: "http://localhost:4200" # Origen permitido para el frontend Angular local (ajústalo para prod)

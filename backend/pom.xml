@@ -1,110 +1,140 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Declaración XML estándar con codificación UTF-8 -->
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- Nodo raíz POM con namespaces y schemaLocation para validación XSD -->
+
     <modelVersion>4.0.0</modelVersion>
+    <!-- Versión del modelo POM -->
 
     <parent>
+        <!-- Heredamos configuración del parent de Spring Boot (maneja versiones y plugins) -->
         <groupId>org.springframework.boot</groupId>
+        <!-- Grupo del parent -->
         <artifactId>spring-boot-starter-parent</artifactId>
+        <!-- Artefacto del parent -->
         <version>3.5.4</version>
+        <!-- Versión de Spring Boot (compatible con Java 21 y Jakarta) -->
         <relativePath/>
+        <!-- Sin ruta relativa: Maven buscará el parent en el repositorio central -->
     </parent>
 
     <groupId>com.acme</groupId>
+    <!-- Grupo propio del proyecto -->
     <artifactId>encuestas</artifactId>
+    <!-- Nombre del artefacto (JAR) -->
     <version>0.0.1-SNAPSHOT</version>
+    <!-- Versión actual del proyecto (SNAPSHOT porque sigue en desarrollo) -->
     <name>encuestas</name>
+    <!-- Nombre descriptivo del proyecto -->
     <description>Plataforma de encuestas - Backend</description>
+    <!-- Descripción del proyecto -->
 
     <properties>
+        <!-- Propiedades reutilizables (versiones, Java, etc.) -->
         <java.version>21</java.version>
+        <!-- Compilaremos con Java 21 -->
         <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <!-- Versión de MapStruct (mapeo DTO) -->
         <springdoc.version>2.5.0</springdoc.version>
+        <!-- Versión de Springdoc OpenAPI (Swagger UI para Spring MVC) -->
         <jjwt.version>0.11.5</jjwt.version>
+        <!-- Versión de JJWT (tokens JWT) -->
         <lombok.version>1.18.32</lombok.version>
+        <!-- Versión de Lombok (getters/setters/anotaciones) -->
     </properties>
 
     <dependencies>
-        <!-- Web MVC -->
+        <!-- =========================
+             DEPENDENCIAS PRINCIPALES
+             ========================= -->
+
+        <!-- Web MVC: controladores REST, validación de entradas, etc. -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Validación -->
+        <!-- Validación Jakarta (anotaciones @NotNull, @Email, etc.) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- Seguridad -->
+        <!-- Seguridad (Spring Security): autenticación/autorización -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- JPA + PostgreSQL -->
+        <!-- JPA (capa de persistencia relacional) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
+
+        <!-- Driver de PostgreSQL (runtime porque solo se necesita en ejecución) -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- MongoDB -->
+        <!-- Spring Data MongoDB (persistencia en Mongo para respuestas, etc.) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
 
-        <!-- Actuator -->
+        <!-- Actuator (endpoints de salud, métricas, info) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
-        <!-- OpenAPI / Swagger UI -->
+        <!-- OpenAPI / Swagger UI (documentación interactiva de la API) -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc.version}</version>
         </dependency>
 
-        <!-- Lombok -->
+        <!-- Lombok (anotaciones para reducir boilerplate) -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+            <!-- optional=true: no se requiere en tiempo de ejecución -->
         </dependency>
 
-        <!-- Flyway -->
+        <!-- Flyway (migraciones de base de datos) -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-core</artifactId>
         </dependency>
-        <!-- Extensiones específicas para PostgreSQL (útil en algunos escenarios) -->
+
+        <!-- Soporte específico de Flyway para PostgreSQL (desde Flyway 10+ en artefacto separado) -->
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
-        <!-- MapStruct (lo usaremos más adelante para mapeos DTO) -->
+        <!-- MapStruct (mapeo entre entidades y DTOs) -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>${mapstruct.version}</version>
         </dependency>
 
-        <!-- JWT (jjwt) -->
+        <!-- JWT (JJWT API) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jjwt.version}</version>
         </dependency>
+        <!-- Implementación + integración Jackson (ambas en runtime) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
@@ -118,7 +148,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- DevTools (solo desarrollo) -->
+        <!-- DevTools (hot reload en DEV; no usar en producción) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -126,12 +156,18 @@
             <optional>true</optional>
         </dependency>
 
-        <!-- TEST (JUnit 5) -->
+        <!-- =========================
+             TESTING
+             ========================= -->
+
+        <!-- Starter de tests (JUnit 5, AssertJ, Mockito básico, etc.) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- Helpers de test para Spring Security -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
@@ -140,20 +176,24 @@
     </dependencies>
 
     <build>
+        <!-- Configuración de build (plugins) -->
         <plugins>
-            <!-- Spring Boot -->
+
+            <!-- Plugin de Spring Boot (empaquetado y arranque) -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
-            <!-- Java 21 + annotation processors (Lombok/MapStruct) -->
+            <!-- Compilación con Java 21 + procesadores de anotaciones (Lombok/MapStruct) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <release>${java.version}</release>
+                    <!-- Indica la versión objetivo de Java (21) -->
                     <annotationProcessorPaths>
+                        <!-- Rutas de procesadores de anotaciones usados en compilación -->
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
