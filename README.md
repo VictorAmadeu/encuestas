@@ -1,8 +1,5 @@
-# Plataforma de Encuestas (Spring Boot + Angular)
-
-Monorepo con:
-- `backend/` — Spring Boot 3.x (Java 21), Postgres (SQL), MongoDB (NoSQL)
-- `frontend/` — Angular 17
+# Plataforma de Encuestas 
+Plataforma monorepo para crear y gestionar encuestas en línea. El backend está desarrollado con **Spring Boot 3** (Java 21) y persiste datos en **PostgreSQL** y **MongoDB**. El frontend se implementará con **Angular 17**.
 
 ## Requisitos
 - Java 17+ (usamos 21)
@@ -11,8 +8,24 @@ Monorepo con:
 - IntelliJ IDEA Community, VS Code
 
 ## Estructura
-encuestas/
-├─ backend/
-└─ frontend/
+- **Java 21** y Maven 3.x (puedes usar el wrapper `mvnw` incluido)
+- **Node.js 20** y Angular CLI (para el frontend)
+- **Docker** y **docker-compose** para las bases de datos
+- **Git Desktop**
 
-> DB por defecto: PostgreSQL + MongoDB (Docker).
+
+## Arquitectura del repositorio
+
+```
+encuestas/
+├── backend/        # API REST con Spring Boot
+├── frontend/       # Aplicación Angular (pendiente)
+└── docker-compose.yml
+```
+
+### Backend
+
+- Framework: Spring Boot 3, Spring Security, JPA, Spring Data MongoDB
+- Migraciones de BD con Flyway (`backend/src/main/resources/db/migration`)
+- Documentación de API con springdoc (Swagger UI en `/swagger-ui.html`)
+- Perfiles de configuración: `dev` (por defecto) y `prod`
