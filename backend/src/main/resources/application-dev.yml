@@ -32,13 +32,14 @@ springdoc:                        # Raíz de springdoc-openapi
 
 # Configuración JWT de ejemplo (NO usar este secreto en producción)
 jwt:                              # Bloque de propiedades personalizadas para JWT
-  secret: "Enc0ntr4rUnS3cr3t0!"   # Secreto para firmar tokens (cámbialo en prod; mejor por variable de entorno)
+  secret: "CxOAbx6evEcJxO14z+xceQp1aCobJi1QrVRT4xq3qFU="   # Secreto para firmar tokens (cámbialo en prod; mejor por variable de entorno)
   accessTokenMinutes: 15          # Minutos de validez del access token
   issuer: "encuestas-app"         # Emisor que se incluirá en el claim 'iss' del token
 
 logging:                          # Configuración de niveles de log
   level:                          # Niveles por paquete/clase
-    org.springframework.security: INFO   # Seguridad a nivel informativo (suficiente en dev)
+    org.springframework.security: DEBUG
+    # Seguridad a nivel informativo (suficiente en dev)
     org.flywaydb: info                   # Logs de migración de Flyway (info para ver qué se aplica)
     org.hibernate.SQL: debug             # Muestra el SQL ejecutado por Hibernate (útil al depurar)
 
