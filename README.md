@@ -27,12 +27,12 @@ Bienvenido al repositorio **encuestas**, una base para construir una plataforma 
 ## Características principales
 
 El backend proporciona una base sólida para desarrollar un sistema de encuestas completo. Entre sus principales características se incluyen:
-•	**Gestión de usuarios:** el modelo User almacena email, contraseña cifrada (bcrypt), rol (p. ej. USER o ADMIN) y marcas de creación/modificación[1]. El endpoint de autenticación (/api/auth/login) permite iniciar sesión y devuelve un token JWT válido.
-•	**Registro y autenticación con JWT:** los usuarios pueden registrarse mediante /api/auth/register, lo que crea un nuevo usuario y responde con un token JWT[2]. El token se firma utilizando la clave secreta definida en la configuración y contiene el identificador y el rol del usuario[3].
-•	**Persistencia híbrida**:** la información estructural (usuarios, encuestas, preguntas y opciones) se almacena en PostgreSQL. El script de migración V1\_\_init.sql crea las tablas users, surveys, questions y options con sus relaciones e índices[4]. Las respuestas de las encuestas se guardan en la colección responses de MongoDB, representadas por los documentos ResponseDocument, AnswerDocument y MetaData[5].
-•	**Seguridad basada en roles:** un filtro JWT (JwtFilter) intercepta cada petición, valida el token y establece la autenticación en el contexto de Spring[6]. La clase SecurityConfig declara reglas de acceso: rutas como /api/auth/**, /v3/api-docs/** o /swagger-ui/\*\* son públicas; los demás endpoints requieren autenticación y algunos exigen el rol ADMIN[7].
-•	**Versionado de bases de datos con Flyway:** al arrancar la aplicación se ejecutan las migraciones SQL localizadas en backend/src/main/resources/db/migration/[4]. Flyway se configura en application-dev.yml para crear un esquema base y aplicar futuras actualizaciones[8].
-•	**Documentación de la API:** Springdoc-OpenAPI genera automáticamente la especificación OpenAPI y una interfaz Swagger UI accesible en /swagger-ui.html[9]. Esto facilita la prueba de los endpoints desde el navegador.
+• **Gestión de usuarios:** el modelo User almacena email, contraseña cifrada (bcrypt), rol (p. ej. USER o ADMIN) y marcas de creación/modificación[1]. El endpoint de autenticación (/api/auth/login) permite iniciar sesión y devuelve un token JWT válido.
+• **Registro y autenticación con JWT:** los usuarios pueden registrarse mediante /api/auth/register, lo que crea un nuevo usuario y responde con un token JWT[2]. El token se firma utilizando la clave secreta definida en la configuración y contiene el identificador y el rol del usuario[3].
+• **Persistencia híbrida**:** la información estructural (usuarios, encuestas, preguntas y opciones) se almacena en PostgreSQL. El script de migración V1\_\_init.sql crea las tablas users, surveys, questions y options con sus relaciones e índices[4]. Las respuestas de las encuestas se guardan en la colección responses de MongoDB, representadas por los documentos ResponseDocument, AnswerDocument y MetaData[5].
+• **Seguridad basada en roles:** un filtro JWT (JwtFilter) intercepta cada petición, valida el token y establece la autenticación en el contexto de Spring[6]. La clase SecurityConfig declara reglas de acceso: rutas como /api/auth/**, /v3/api-docs/** o /swagger-ui/\*\* son públicas; los demás endpoints requieren autenticación y algunos exigen el rol ADMIN[7].
+• **Versionado de bases de datos con Flyway:** al arrancar la aplicación se ejecutan las migraciones SQL localizadas en backend/src/main/resources/db/migration/[4]. Flyway se configura en application-dev.yml para crear un esquema base y aplicar futuras actualizaciones[8].
+• **Documentación de la API:\*\* Springdoc-OpenAPI genera automáticamente la especificación OpenAPI y una interfaz Swagger UI accesible en /swagger-ui.html[9]. Esto facilita la prueba de los endpoints desde el navegador.
 
 **Nota:** en la fecha de elaboración de este documento no existe un módulo de frontend; sólo se ha implementado el módulo backend. Los futuros endpoints para gestionar encuestas, preguntas y respuestas aún se encuentran **por completar**.
 
@@ -40,7 +40,9 @@ El backend proporciona una base sólida para desarrollar un sistema de encuestas
 
 ## Arquitectura y estructura del proyecto
 
-La aplicación sigue una arquitectura típica de **Spring Boot**, con las capas habituales de controlador, servicio, repositorio y modelo. Además, utiliza dos bases de datos distintas para optimizar el almacenamiento:
+Breve descripción
+
+La aplicación implementa uma arquitetura clássica de **Spring Boot** organizada em camadas: controlador (REST), serviço (lógica de negocio), repositório (acesso a dados) e modelos/entidades. Para otimizar persistência e consultas, o projeto usa duas bases de dados especializadas:
 
 ```mermaid
 graph TD
@@ -51,15 +53,37 @@ graph TD
   B -- JPA --> C[PostgreSQL]
   B -- Spring Data MongoDB --> D[MongoDB]
 
-  C -- Estructura (users,surveys,questions,options) --> B
-  D -- Respuestas --> B
+  C -- Estructura (users, surveys, questions, options) --> B
+  D -- Respuestas (collections: responses) --> B
 ```
 
-1. **Backend (**backend/**):** módulo Maven con código Java. La clase principal EncuestasApplication arranca Spring Boot[10]. Los modelos de dominio (User, Survey, Question y Option) usan JPA para mapearse a las tablas mencionadas[11][12].
-2. **Configuración:** en application.yml se define el nombre de la aplicación y el perfil por defecto (dev)[13]. application-dev.yml contiene los detalles de acceso a Postgres y MongoDB, la configuración de Flyway y las propiedades del JWT[14].
-3. **Seguridad:** SecurityConfig y JwtFilter integran Spring Security con autenticación stateless. Existe un perfil alternativo dev & !secure (DevSecurityConfig) que desactiva la seguridad en desarrollo[15].
-4. **Migraciones:** en la carpeta db/migration viven los scripts de Flyway. La migración inicial crea las tablas y sus índices[4].
-5. **Docker Compose:** el archivo docker-compose.yml levanta contenedores de PostgreSQL y MongoDB con credenciales preconfiguradas[16]. Ambos servicios exponen sus puertos (5432 y 27017) y definen volúmenes persistentes.
+Componentes y responsabilidades (rápido)
+
+- Backend (`backend/`): módulo Maven con el código Java. La clase principal `EncuestasApplication` arranca Spring Boot y carga los beans. Las entidades JPA principales son `User`, `Survey`, `Question` y `Option` (mappeadas a PostgreSQL).
+- Persistência relacional (PostgreSQL): almacena la estructura del dominio — usuarios, encuestas, preguntas y opciones. Las entidades JPA y las migraciones Flyway viven en `backend/src/main/resources/db/migration/`.
+- Persistência documental (MongoDB): guarda las respuestas de encuestas en la colección `responses` mediante documentos (`ResponseDocument`, `AnswerDocument`, `MetaData`) para consultas agregadas y almacenamiento flexible.
+- Seguridad: `SecurityConfig` + `JwtFilter` implementan seguridad stateless con JWT. Para desarrollo hay un perfil alternativo (`DevSecurityConfig`) que desactiva restricciones cuando se necesita probar sin auth.
+- Infra & desarrollo: `docker-compose.yml` orquestra PostgreSQL e MongoDB com volumes persistentes. As credenciais e URLs usadas em dev estão em `backend/src/main/resources/application-dev.yml`.
+
+Arquivos chave e onde buscar
+
+- Código principal: `backend/src/main/java/com/acme/encuestas/EncuestasApplication.java`
+- Entidades JPA: `backend/src/main/java/com/acme/encuestas/model/`
+- Documentos MongoDB: `backend/src/main/java/com/acme/encuestas/document/`
+- Repositórios: `backend/src/main/java/com/acme/encuestas/repository/`
+- Configurações: `backend/src/main/resources/application.yml` (base) e `application-dev.yml` (dev)
+- Migrações Flyway: `backend/src/main/resources/db/migration/V1__init.sql`
+
+Flujo de datos (essencial)
+
+1. El cliente (futuro Angular) consume la API REST del backend.
+2. El backend usa JPA para operaciones CRUD sobre PostgreSQL (estructura y metadatos de encuestas).
+3. Cuando se guardan respuestas, se persisten como documentos en MongoDB para permitir esquemas flexibles y consultas agregadas.
+4. Flyway gestiona la evolución del esquema en PostgreSQL al arrancar la aplicación.
+
+Por qué este enfoque
+
+Usar PostgreSQL para el modelo relacional mantiene integridad referencial (encuestas, preguntas y opciones), mientras que MongoDB facilita almacenar respuestas con estructura variable y realizar agregaciones/consultas analíticas sin afectar el esquema relacional.
 
 ---
 
@@ -67,13 +91,12 @@ graph TD
 
 Para clonar y ejecutar este proyecto necesitas:
 
-
-| Herramienta | Versión recomendada | Uso |
-|---|---|---|
-| **Java JDK** | 21 (también se puede usar 17) | Necesario para compilar y ejecutar el backend Spring. |
-| **Maven** | Usa el *wrapper* `./mvnw` incluido | Gestiona dependencias y permite compilar/arrancar la aplicación. |
-| **Docker & Docker Compose** | Última versión estable | Se usa para levantar Postgres y Mongo de forma aislada. |
-| **Node.js & Angular CLI** | (opcional) | Útiles para el cliente Angular una vez se desarrolle. |
+| Herramienta                 | Versión recomendada                | Uso                                                              |
+| --------------------------- | ---------------------------------- | ---------------------------------------------------------------- |
+| **Java JDK**                | 21 (también se puede usar 17)      | Necesario para compilar y ejecutar el backend Spring.            |
+| **Maven**                   | Usa el _wrapper_ `./mvnw` incluido | Gestiona dependencias y permite compilar/arrancar la aplicación. |
+| **Docker & Docker Compose** | Última versión estable             | Se usa para levantar Postgres y Mongo de forma aislada.          |
+| **Node.js & Angular CLI**   | (opcional)                         | Útiles para el cliente Angular una vez se desarrolle.            |
 
 ---
 
@@ -117,7 +140,7 @@ Durante el arranque verás en los logs cómo Flyway aplica la migración V1\_\_i
 docker compose exec postgres psql -U encuestas -d encuestas -c "\dt"
 ```
 
-Deberías ver las tablas users, surveys, questions, options y flyway\_schema\_history.
+Deberías ver las tablas users, surveys, questions, options y flyway_schema_history.
 
 ---
 
@@ -137,7 +160,7 @@ En desarrollo las credenciales están codificadas (usuario encuestas, contraseñ
 
 1. Cambiar el secreto JWT (jwt.secret) y el tiempo de expiración en un archivo application-prod.yml o mediante variables de entorno[18].
 2. Configurar las URLs de PostgreSQL y MongoDB con usuarios y contraseñas seguros[19].
-3. Restringir el origen CORS a tu dominio de frontend. Puedes modificar allowed-origins en application.yml o exportar APP\_CORS\_ALLOWED\_ORIGINS para limitar los orígenes permitidos[20].
+3. Restringir el origen CORS a tu dominio de frontend. Puedes modificar allowed-origins en application.yml o exportar APP_CORS_ALLOWED_ORIGINS para limitar los orígenes permitidos[20].
 
 ### Personalización del puerto y contexto
 
@@ -198,9 +221,9 @@ Si las credenciales son incorrectas o la cuenta está deshabilitada, se devuelve
 
 ### Endpoints pendientes
 
-•	**Gestión de encuestas:** creación, listado y eliminación de encuestas (/api/surveys).
-•	**Gestión de preguntas y opciones:** asociar preguntas a encuestas y opciones a preguntas.
-•	**Envío de respuestas:** endpoint para que un usuario responda una encuesta, almacenando sus respuestas en MongoDB.
+• **Gestión de encuestas:** creación, listado y eliminación de encuestas (/api/surveys).
+• **Gestión de preguntas y opciones:** asociar preguntas a encuestas y opciones a preguntas.
+• **Envío de respuestas:** endpoint para que un usuario responda una encuesta, almacenando sus respuestas en MongoDB.
 
 Estas funcionalidades están **por completar;** se invita a la comunidad a colaborar en su implementación.
 
@@ -208,21 +231,21 @@ Estas funcionalidades están **por completar;** se invita a la comunidad a colab
 
 ## Estructura de carpetas
 
-Ruta/archivo	Descripción
+Ruta/archivo Descripción
 
-docker-compose.yml	Compose file que orquesta los contenedores de PostgreSQL y MongoDB[17].
+docker-compose.yml Compose file que orquesta los contenedores de PostgreSQL y MongoDB[17].
 
-backend/pom.xml	Archivo Maven que define las dependencias (Spring Boot, JPA, MongoDB, Security, Flyway, MapStruct, Lombok, JWT)[23].
+backend/pom.xml Archivo Maven que define las dependencias (Spring Boot, JPA, MongoDB, Security, Flyway, MapStruct, Lombok, JWT)[23].
 
-backend/mvnw y backend/mvnw\.cmd	Wrappers de Maven para no depender de una instalación global.
-backend/src/main/java/com/acme/encuestas	Código fuente de la aplicación. Incluye la clase principal, modelos, controladores, servicios, repositorios y configuración.
-backend/src/main/resources/application.yml	Configuración base de Spring Boot (nombre de la aplicación, perfil por defecto y CORS)[24].
+backend/mvnw y backend/mvnw\.cmd Wrappers de Maven para no depender de una instalación global.
+backend/src/main/java/com/acme/encuestas Código fuente de la aplicación. Incluye la clase principal, modelos, controladores, servicios, repositorios y configuración.
+backend/src/main/resources/application.yml Configuración base de Spring Boot (nombre de la aplicación, perfil por defecto y CORS)[24].
 
-backend/src/main/resources/application-dev.yml	Configuración específica para desarrollo: credenciales de BD, Flyway, Swagger, JWT y niveles de log[25].
+backend/src/main/resources/application-dev.yml Configuración específica para desarrollo: credenciales de BD, Flyway, Swagger, JWT y niveles de log[25].
 
-backend/src/main/resources/db/migration/	Migraciones de Flyway con scripts SQL versionados[4].
+backend/src/main/resources/db/migration/ Migraciones de Flyway con scripts SQL versionados[4].
 
-backend/src/test/java/...	Tests unitarios; actualmente sólo verifica la carga del contexto Spring[26].
+backend/src/test/java/... Tests unitarios; actualmente sólo verifica la carga del contexto Spring[26].
 
 No existe aún un directorio frontend/. Cuando se integre la aplicación Angular, deberá ubicarse en la raíz junto al backend.
 
@@ -262,13 +285,13 @@ Opcionalmente puedes crear una imagen Docker del backend e integrarla en el dock
 
 ## Solución de problemas
 
-| Problema | Posible causa y solución |
-| --- | --- |
-| **La aplicación no arranca y muestra** Port 5432 is already in use | Otro proceso (otra base o contenedor) está usando el puerto 5432. Cambia el mapeo de puertos en docker-compose.yml (por ejemplo 5433:5432) y actualiza application-dev.yml en la URL JDBC. |
+| Problema                                                                 | Posible causa y solución                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **La aplicación no arranca y muestra** Port 5432 is already in use       | Otro proceso (otra base o contenedor) está usando el puerto 5432. Cambia el mapeo de puertos en docker-compose.yml (por ejemplo 5433:5432) y actualiza application-dev.yml en la URL JDBC.                                      |
 | org.postgresql.util.PSQLException: FATAL: password authentication failed | Asegúrate de que los valores de POSTGRES_USER y POSTGRES_PASSWORD en docker-compose.yml coinciden con username y password en application-dev.yml[28]. Elimina los volúmenes (docker compose down -v) si modificas credenciales. |
-| **No se ejecutan las migraciones** | Confirma que Flyway está habilitado (spring.flyway.enabled=true en application-dev.yml[8]). Verifica que los scripts se encuentran en classpath:db/migration/ y tienen nombres V<version>__<descripcion>.sql. |
-| **Recibo** 401 Unauthorized **en endpoints privados** | Debes incluir un encabezado Authorization: Bearer <jwt> válido en la petición. Obtén el token mediante /api/auth/login o /api/auth/register. |
-| Invalid JWT signature **o expiración** | El token ha sido manipulado o caducado. Genera uno nuevo y, en producción, cambia el secreto JWT y limita el tiempo de validez[29]. |
+| **No se ejecutan las migraciones**                                       | Confirma que Flyway está habilitado (spring.flyway.enabled=true en application-dev.yml[8]). Verifica que los scripts se encuentran en classpath:db/migration/ y tienen nombres V<version>\_\_<descripcion>.sql.                 |
+| **Recibo** 401 Unauthorized **en endpoints privados**                    | Debes incluir un encabezado Authorization: Bearer <jwt> válido en la petición. Obtén el token mediante /api/auth/login o /api/auth/register.                                                                                    |
+| Invalid JWT signature **o expiración**                                   | El token ha sido manipulado o caducado. Genera uno nuevo y, en producción, cambia el secreto JWT y limita el tiempo de validez[29].                                                                                             |
 
 Para otros problemas, consulta los logs de la aplicación y de los contenedores (con docker compose logs).
 
@@ -290,9 +313,9 @@ Este proyecto ofrece un buen punto de partida, pero debe ajustarse a las mejores
 
 Aunque el proyecto es pequeño, se pueden adoptar medidas para mejorar el rendimiento:
 
-•	**Lazily loaded collections:** las relaciones JPA (Survey.questions, Question.options) están definidas con fetch = LAZY para evitar cargar datos innecesarios[32]. Añade consultas específicas en los repositorios para evitar el n+1 problem.
-•	**Indices adecuados:** la migración inicial crea índices para búsquedas por email, propietario de la encuesta, preguntas por encuesta y opciones por pregunta[33].
-•	**Paginación y caché:** cuando se implementen los listados de encuestas, considera usar Pageable en Spring Data y cachés (Caffeine/Redis) para consultas frecuentes.
+• **Lazily loaded collections:** las relaciones JPA (Survey.questions, Question.options) están definidas con fetch = LAZY para evitar cargar datos innecesarios[32]. Añade consultas específicas en los repositorios para evitar el n+1 problem.
+• **Indices adecuados:** la migración inicial crea índices para búsquedas por email, propietario de la encuesta, preguntas por encuesta y opciones por pregunta[33].
+• **Paginación y caché:** cuando se implementen los listados de encuestas, considera usar Pageable en Spring Data y cachés (Caffeine/Redis) para consultas frecuentes.
 
 ---
 
@@ -306,13 +329,13 @@ Actualmente no se incluyen mecanismos de internacionalización (i18n) ni accesib
 
 El repositorio está en fase **experimental/educativa**. Las siguientes tareas clave se encuentran en el plan de trabajo:
 
-•	[ ] Implementar controladores REST para encuestas, preguntas y opciones.
-•	[ ] Crear servicios y casos de uso para la creación, actualización y eliminación de encuestas.
-•	[ ] Añadir un endpoint para enviar y almacenar respuestas en MongoDB y evitar duplicados utilizando ResponseRepository.existsBySurveyIdAndRespondentId[31].
-•	[ ] Desarrollar la aplicación Angular (frontend/) que consuma esta API.
-•	[ ] Añadir pruebas unitarias e integración que cubran autenticación, validaciones y lógica de negocio.
-•	[ ] Integrar CI/CD (GitHub Actions) y badges de estado en el README.
-•	[ ] Definir licencia abierta (MIT, Apache 2.0) y código de conducta.
+• [ ] Implementar controladores REST para encuestas, preguntas y opciones.
+• [ ] Crear servicios y casos de uso para la creación, actualización y eliminación de encuestas.
+• [ ] Añadir un endpoint para enviar y almacenar respuestas en MongoDB y evitar duplicados utilizando ResponseRepository.existsBySurveyIdAndRespondentId[31].
+• [ ] Desarrollar la aplicación Angular (frontend/) que consuma esta API.
+• [ ] Añadir pruebas unitarias e integración que cubran autenticación, validaciones y lógica de negocio.
+• [ ] Integrar CI/CD (GitHub Actions) y badges de estado en el README.
+• [ ] Definir licencia abierta (MIT, Apache 2.0) y código de conducta.
 
 Si detectas otras mejoras o errores, abre un issue en GitHub describiendo el problema y la posible solución.
 
@@ -398,4 +421,3 @@ El proyecto fue iniciado por [VictorAmadeu](https://github.com/VictorAmadeu). Ag
 [https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/README.md](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/README.md)
 
 ---
-
