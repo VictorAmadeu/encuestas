@@ -44,7 +44,7 @@ Breve descripción
 
 La aplicación implementa uma arquitetura clássica de **Spring Boot** organizada em camadas: controlador (REST), serviço (lógica de negocio), repositório (acesso a dados) e modelos/entidades. Para otimizar persistência e consultas, o projeto usa duas bases de dados especializadas:
 
-```mermaid
+```
 graph TD
   subgraph Cliente (futuro)
     A[Aplicación Angular]
