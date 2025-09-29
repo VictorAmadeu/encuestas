@@ -4,23 +4,23 @@ Bienvenido al repositorio **encuestas**, una base para construir una plataforma 
 
 ## Índice
 
-1. Características principales
-2. Arquitectura y estructura del proyecto
-3. Requisitos previos
-4. Instalación paso a paso
-5. Configuración
-6. Uso de la API
-7. Estructura de carpetas
-8. Pruebas
-9. Despliegue
-10. Solución de problemas
-11. Seguridad y buenas prácticas
-12. Rendimiento y optimización
-13. Internacionalización y accesibilidad
-14. Roadmap y estado del proyecto
-15. Cómo contribuir
-16. Código de conducta
-17. Licencia y créditos
+1. [Características principales](#características-principales)
+2. [Arquitectura y estructura del proyecto](#arquitectura-y-estructura-del-proyecto)
+3. [Requisitos previos](#requisitos-previos)
+4. [Instalación paso a paso](#instalación-paso-a-paso)
+5. [Configuración](#configuración)
+6. [Uso de la API](#uso-de-la-api)
+7. [Estructura de carpetas](#estructura-de-carpetas)
+8. [Pruebas](#pruebas)
+9. [Despliegue](#despliegue)
+10. [Solución de problemas](#solución-de-problemas)
+11. [Seguridad y buenas prácticas](#seguridad-y-buenas-prácticas)
+12. [Rendimiento y optimización](#rendimiento-y-optimización)
+13. [Internacionalización y accesibilidad](#internacionalización-y-accesibilidad)
+14. [Roadmap y estado del proyecto](#roadmap-y-estado-del-proyecto)
+15. [Cómo contribuir](#cómo-contribuir)
+16. [Código de conducta](#código-de-conducta)
+17. [Licencia y créditos](#licencia-y-créditos)
 
 ---
 
@@ -32,14 +32,13 @@ El backend proporciona una base sólida para desarrollar un sistema de encuestas
 
 • **Registro y autenticación con JWT:** los usuarios pueden registrarse mediante /api/auth/register, lo que crea un nuevo usuario y responde con un token JWT[2]. El token se firma utilizando la clave secreta definida en la configuración y contiene el identificador y el rol del usuario[3].
 
-• **Persistencia híbrida**:** la información estructural (usuarios, encuestas, preguntas y opciones) se almacena en PostgreSQL. El script de migración V1\_\_init.sql crea las tablas users, surveys, questions y options con sus relaciones e índices[4]. Las respuestas de las encuestas se guardan en la colección responses de MongoDB, representadas por los documentos ResponseDocument, AnswerDocument y MetaData[5].
+• **Persistencia híbrida**:\*\* la información estructural (usuarios, encuestas, preguntas y opciones) se almacena en PostgreSQL. El script de migración V1\_\_init.sql crea las tablas users, surveys, questions y options con sus relaciones e índices[4]. Las respuestas de las encuestas se guardan en la colección responses de MongoDB, representadas por los documentos ResponseDocument, AnswerDocument y MetaData[5].
 
 • **Seguridad basada en roles:** un filtro JWT (JwtFilter) intercepta cada petición, valida el token y establece la autenticación en el contexto de Spring[6]. La clase SecurityConfig declara reglas de acceso: rutas como /api/auth/**, /v3/api-docs/** o /swagger-ui/\*\* son públicas; los demás endpoints requieren autenticación y algunos exigen el rol ADMIN[7].
 
 • **Versionado de bases de datos con Flyway:** al arrancar la aplicación se ejecutan las migraciones SQL localizadas en backend/src/main/resources/db/migration/[4]. Flyway se configura en application-dev.yml para crear un esquema base y aplicar futuras actualizaciones[8].
 
-• **Documentación de la API:\*\* Springdoc-OpenAPI genera automáticamente la especificación OpenAPI y una interfaz Swagger UI accesible en /swagger-ui.html[9]. Esto facilita la prueba de los endpoints desde el navegador.
-
+• \*\*Documentación de la API:\*\* Springdoc-OpenAPI genera automáticamente la especificación OpenAPI y una interfaz Swagger UI accesible en /swagger-ui.html[9]. Esto facilita la prueba de los endpoints desde el navegador.
 
 **Nota:** en la fecha de elaboración de este documento no existe un módulo de frontend; sólo se ha implementado el módulo backend. Los futuros endpoints para gestionar encuestas, preguntas y respuestas aún se encuentran **por completar**.
 
@@ -47,7 +46,7 @@ El backend proporciona una base sólida para desarrollar un sistema de encuestas
 
 ## Arquitectura y estructura del proyecto
 
-### Breve descripción ####
+### Breve descripción
 
 La aplicación implementa uma arquitetura clássica de **Spring Boot** organizada em camadas: controlador (REST), serviço (lógica de negocio), repositório (acesso a dados) e modelos/entidades. Para otimizar persistência e consultas, o projeto usa duas bases de dados especializadas:
 
@@ -64,7 +63,7 @@ graph TD
   D -- Respuestas (collections: responses) --> B
 ```
 
-#### Componentes y responsabilidades (rápido) ###
+#### Componentes y responsabilidades (rápido)
 
 - Backend (`backend/`): módulo Maven con el código Java. La clase principal `EncuestasApplication` arranca Spring Boot y carga los beans. Las entidades JPA principales son `User`, `Survey`, `Question` y `Option` (mappeadas a PostgreSQL).
 - Persistência relacional (PostgreSQL): almacena la estructura del dominio — usuarios, encuestas, preguntas y opciones. Las entidades JPA y las migraciones Flyway viven en `backend/src/main/resources/db/migration/`.
@@ -72,7 +71,7 @@ graph TD
 - Seguridad: `SecurityConfig` + `JwtFilter` implementan seguridad stateless con JWT. Para desarrollo hay un perfil alternativo (`DevSecurityConfig`) que desactiva restricciones cuando se necesita probar sin auth.
 - Infra & desarrollo: `docker-compose.yml` orquestra PostgreSQL e MongoDB com volumes persistentes. As credenciais e URLs usadas em dev estão em `backend/src/main/resources/application-dev.yml`.
 
-### Arquivos chave e onde buscar ###
+### Arquivos chave e onde buscar
 
 - Código principal: `backend/src/main/java/com/acme/encuestas/EncuestasApplication.java`
 - Entidades JPA: `backend/src/main/java/com/acme/encuestas/model/`
@@ -81,14 +80,14 @@ graph TD
 - Configurações: `backend/src/main/resources/application.yml` (base) e `application-dev.yml` (dev)
 - Migrações Flyway: `backend/src/main/resources/db/migration/V1__init.sql`
 
-### Flujo de datos (essencial) ###
+### Flujo de datos (essencial)
 
 1. El cliente (futuro Angular) consume la API REST del backend.
 2. El backend usa JPA para operaciones CRUD sobre PostgreSQL (estructura y metadatos de encuestas).
 3. Cuando se guardan respuestas, se persisten como documentos en MongoDB para permitir esquemas flexibles y consultas agregadas.
 4. Flyway gestiona la evolución del esquema en PostgreSQL al arrancar la aplicación.
 
-### Por qué este enfoque ###
+### Por qué este enfoque
 
 Usar PostgreSQL para el modelo relacional mantiene integridad referencial (encuestas, preguntas y opciones), mientras que MongoDB facilita almacenar respuestas con estructura variable y realizar agregaciones/consultas analíticas sin afectar el esquema relacional.
 
