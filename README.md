@@ -1,76 +1,72 @@
-# Plataforma de Encuestas 📊
+# Plataforma de encuestas – Backend Spring Boot
 
-Este repositorio alberga el backend y la configuración inicial de una plataforma de encuestas desarrollada con **Spring Boot**, pensada para combinarse con un cliente **Angular** (por implementar). Su objetivo es permitir la creación, edición y publicación de encuestas en línea, la gestión de usuarios y el almacenamiento de resultados en distintos motores de base de datos.
-
----
+Bienvenido al repositorio **encuestas**, una base para construir una plataforma web de encuestas. Este proyecto ofrece un backend escrito en **Java 21** utilizando **Spring Boot 3** y persiste los datos en **PostgreSQL** y **MongoDB**. En el futuro se añadirá un cliente **Angular** para completar la experiencia de usuario, pero actualmente el enfoque principal es el servicio REST y la configuración de bases de datos.
 
 ## Índice
 
-- [Descripción general](#descripción-general)
-- [Características](#características)
-- [Arquitectura y estructura del proyecto](#arquitectura-y-estructura-del-proyecto)
-- [Requisitos previos](#requisitos-previos)
-- [Instalación y puesta en marcha](#instalación-y-puesta-en-marcha)
-- [Configuración de bases de datos](#configuración-de-bases-de-datos)
-- [Migraciones con Flyway](#migraciones-con-flyway)
-- [Perfiles y configuración](#perfiles-y-configuración)
-- [Seguridad y JWT](#seguridad-y-jwt)
-- [Documentación de la API](#documentación-de-la-api)
-- [Contribuciones](#contribuciones)
-- [Licencia](#licencia)
-- [Referencias](#referencias)
+1. Características principales
+2. Arquitectura y estructura del proyecto
+3. Requisitos previos
+4. Instalación paso a paso
+5. Configuración
+6. Uso de la API
+7. Estructura de carpetas
+8. Pruebas
+9. Despliegue
+10. Solución de problemas
+11. Seguridad y buenas prácticas
+12. Rendimiento y optimización
+13. Internacionalización y accesibilidad
+14. Roadmap y estado del proyecto
+15. Cómo contribuir
+16. Código de conducta
+17. Licencia y créditos
 
 ---
 
-## Descripción general
+## Características principales
 
-La **Plataforma de Encuestas** es un proyecto educativo/experimental cuyo objetivo es proporcionar una base sólida para construir un sistema de encuestas completo. El backend está construido en **Java 21** empleando **Spring Boot 3** y varias dependencias clave:
+El backend proporciona una base sólida para desarrollar un sistema de encuestas completo. Entre sus principales características se incluyen:
+•	**Gestión de usuarios:** el modelo User almacena email, contraseña cifrada (bcrypt), rol (p. ej. USER o ADMIN) y marcas de creación/modificación[1]. El endpoint de autenticación (/api/auth/login) permite iniciar sesión y devuelve un token JWT válido.
+•	**Registro y autenticación con JWT:** los usuarios pueden registrarse mediante /api/auth/register, lo que crea un nuevo usuario y responde con un token JWT[2]. El token se firma utilizando la clave secreta definida en la configuración y contiene el identificador y el rol del usuario[3].
+•	**Persistencia híbrida**:** la información estructural (usuarios, encuestas, preguntas y opciones) se almacena en PostgreSQL. El script de migración V1\_\_init.sql crea las tablas users, surveys, questions y options con sus relaciones e índices[4]. Las respuestas de las encuestas se guardan en la colección responses de MongoDB, representadas por los documentos ResponseDocument, AnswerDocument y MetaData[5].
+•	**Seguridad basada en roles:** un filtro JWT (JwtFilter) intercepta cada petición, valida el token y establece la autenticación en el contexto de Spring[6]. La clase SecurityConfig declara reglas de acceso: rutas como /api/auth/**, /v3/api-docs/** o /swagger-ui/\*\* son públicas; los demás endpoints requieren autenticación y algunos exigen el rol ADMIN[7].
+•	**Versionado de bases de datos con Flyway:** al arrancar la aplicación se ejecutan las migraciones SQL localizadas en backend/src/main/resources/db/migration/[4]. Flyway se configura en application-dev.yml para crear un esquema base y aplicar futuras actualizaciones[8].
+•	**Documentación de la API:** Springdoc-OpenAPI genera automáticamente la especificación OpenAPI y una interfaz Swagger UI accesible en /swagger-ui.html[9]. Esto facilita la prueba de los endpoints desde el navegador.
 
-- **Web MVC** para exponer endpoints REST;
-- **Spring Data JPA** con PostgreSQL para almacenar la información estructural (usuarios, encuestas, preguntas y opciones);
-- **Spring Data MongoDB** para persistir las respuestas de los participantes de forma flexible;
-- **Spring Security** con autenticación mediante JWT;
-- **Flyway** para versionar el esquema de la base de datos SQL;
-- **Springdoc OpenAPI** para documentar la API de forma automática.
-
-Actualmente el proyecto se centra en el backend y la configuración de las bases de datos. Se espera añadir una aplicación frontend Angular en el futuro para ofrecer una interfaz de usuario completa.
-
----
-
-## Características
-
-- 🧑‍💼 **Gestión de usuarios**: las cuentas se almacenan en la tabla `users` de PostgreSQL e incluyen un rol (p. ej. `ADMIN`, `USER`) y estado de habilitación.
-- 📝 **Creación y publicación de encuestas**: cada encuesta (`surveys`) pertenece a un usuario, tiene un título, descripción y estado (borrador, publicada, cerrada, etc.).
-- ❓ **Soporte para distintos tipos de preguntas**: la tabla `questions` permite definir preguntas de texto o selección con un orden configurable.
-- ✅ **Opciones de respuesta**: las opciones (`options`) vinculan preguntas y posibles respuestas en caso de preguntas cerradas.
-- 🗄️ **Persistencia híbrida**: estructura relacional en PostgreSQL y almacenamiento de respuestas en MongoDB.
-- 🔀 **Versionado de bases de datos**: mediante Flyway se aplican scripts SQL al arrancar la aplicación, garantizando que el esquema está actualizado.
-- 🔐 **Seguridad**: integrada con Spring Security y tokens JWT para proteger los endpoints.
-- 📄 **Documentación automática**: gracias a springdoc-openapi, los endpoints REST cuentan con documentación interactiva (Swagger UI).
+**Nota:** en la fecha de elaboración de este documento no existe un módulo de frontend; sólo se ha implementado el módulo backend. Los futuros endpoints para gestionar encuestas, preguntas y respuestas aún se encuentran **por completar**.
 
 ---
 
 ## Arquitectura y estructura del proyecto
 
-La raíz del repositorio presenta varios archivos y carpetas importantes:
+La aplicación sigue una arquitectura típica de **Spring Boot**, con las capas habituales de controlador, servicio, repositorio y modelo. Además, utiliza dos bases de datos distintas para optimizar el almacenamiento:
 
-| Directorio/archivo | Descripción |
-|---|---|
-| `docker-compose.yml` | Orquesta dos servicios de base de datos: PostgreSQL y MongoDB. Expone los puertos **5432** y **27017** respectivamente, declara volúmenes persistentes (`dbdata`, `mongodata`) y *healthchecks* para cada contenedor **[1]**. |
-| `backend/` | Contiene el código fuente y configuración del backend Spring Boot. |
-| `backend/pom.xml` | Archivo Maven con las dependencias necesarias (Spring Boot, JPA, MongoDB, Security, Lombok, Flyway, MapStruct, JWT, Springdoc, etc.) **[2]**. |
-| `backend/src/main/java/com/acme/encuestas` | Paquete raíz del código Java (por ejemplo, la clase `EncuestasApplication` que inicia Spring Boot) **[3]**. |
-| `backend/src/main/resources/application.yml` | Configuración base de Spring donde se establece el nombre de la aplicación y el **perfil por defecto `dev`** **[4]**. |
-| `backend/src/main/resources/application-dev.yml` | Configuración específica para desarrollo: datos de acceso a Postgres/Mongo, ajustes de JPA, Flyway, Springdoc, JWT y niveles de *logging* **[5]**. |
-| `backend/src/main/resources/db/migration/` | Carpeta con scripts de migración Flyway. La primera migración (`V1__init.sql`) crea las tablas `users`, `surveys`, `questions` y `options` con sus claves foráneas e índices **[6]**. |
+```mermaid
+graph TD
+  subgraph Cliente (futuro)
+    A[Aplicación Angular]
+  end
+  A -- REST --> B[Backend Spring Boot]
+  B -- JPA --> C[PostgreSQL]
+  B -- Spring Data MongoDB --> D[MongoDB]
 
-> **Nota:** todavía no existe un módulo `/frontend/`; se añadirá más adelante cuando se integre la aplicación Angular.
+  C -- Estructura (users,surveys,questions,options) --> B
+  D -- Respuestas --> B
+```
+
+1. **Backend (**backend/**):** módulo Maven con código Java. La clase principal EncuestasApplication arranca Spring Boot[10]. Los modelos de dominio (User, Survey, Question y Option) usan JPA para mapearse a las tablas mencionadas[11][12].
+2. **Configuración:** en application.yml se define el nombre de la aplicación y el perfil por defecto (dev)[13]. application-dev.yml contiene los detalles de acceso a Postgres y MongoDB, la configuración de Flyway y las propiedades del JWT[14].
+3. **Seguridad:** SecurityConfig y JwtFilter integran Spring Security con autenticación stateless. Existe un perfil alternativo dev & !secure (DevSecurityConfig) que desactiva la seguridad en desarrollo[15].
+4. **Migraciones:** en la carpeta db/migration viven los scripts de Flyway. La migración inicial crea las tablas y sus índices[4].
+5. **Docker Compose:** el archivo docker-compose.yml levanta contenedores de PostgreSQL y MongoDB con credenciales preconfiguradas[16]. Ambos servicios exponen sus puertos (5432 y 27017) y definen volúmenes persistentes.
 
 ---
 
 ## Requisitos previos
 
-Antes de arrancar el proyecto asegúrate de contar con los siguientes componentes en tu máquina de desarrollo:
+Para clonar y ejecutar este proyecto necesitas:
+
 
 | Herramienta | Versión recomendada | Uso |
 |---|---|---|
@@ -81,163 +77,325 @@ Antes de arrancar el proyecto asegúrate de contar con los siguientes componente
 
 ---
 
-## Instalación y puesta en marcha
+## Instalación paso a paso
 
-1) **Clona el repositorio:**
+1. **Clonar el repositorio:**
 
 ```bash
 git clone https://github.com/VictorAmadeu/encuestas.git
 cd encuestas
 ```
 
-2) **Levanta las bases de datos con Docker Compose:**
+1. A**rrancar las bases de datos con Docker Compose:**
 
 ```bash
-# arranca Postgres y Mongo en segundo plano
+# levanta Postgres y Mongo en segundo plano
 docker compose up -d
 
-# comprueba el estado
+# verifica que están funcionando
 docker compose ps
 ```
 
-Al iniciar por primera vez, Docker descargará las imágenes `postgres:16` y `mongo:7`. El archivo `docker-compose.yml` expone los puertos predeterminados y declara volúmenes persistentes para que los datos no se pierdan al reiniciar **[1]**.
+La primera vez que ejecutes este comando, Docker descargará las imágenes postgres:16 y mongo:7. Los contenedores usarán los puertos locales 5432 y 27017 y montarán volúmenes (dbdata y mongodata) para persistir los datos[17].
 
-3) **Ejecuta el backend Spring Boot:**
+1. **Compilar y ejecutar el backend:**
 
 ```bash
 cd backend
-# compila (opcional: salta tests)
+# compilar (omitimos tests por ahora)
 ./mvnw -DskipTests package
-# arranca la aplicación con perfil dev
+# arrancar la aplicación con el perfil dev
 ./mvnw spring-boot:run
 ```
 
-Durante el arranque verás en el log cómo Flyway crea la tabla de historial (`flyway_schema_history`) y aplica la migración `V1__init.sql` **[6]**. Una vez la aplicación esté lista, podrás acceder a los endpoints en <http://localhost:8080>.
+Durante el arranque verás en los logs cómo Flyway aplica la migración V1\_\_init.sql y crea las tablas en Postgres[4]. Una vez iniciada, la API estará accesible en [http://localhost:8080](http://localhost:8080).
 
-4) **Comprueba que las tablas están creadas (opcional):**
-
-Ejecuta los siguientes comandos para conectarte al contenedor Postgres y listar las tablas:
+1. **Verificar el esquema de la base de datos (opcional):**
 
 ```bash
+# accede al contenedor de Postgres y lista las tablas
 docker compose exec postgres psql -U encuestas -d encuestas -c "\dt"
-docker compose exec postgres psql -U encuestas -d encuestas -c "\d+ users"
 ```
 
-Deberías ver las tablas `users`, `surveys`, `questions` y `options` junto con la tabla de Flyway.
+Deberías ver las tablas users, surveys, questions, options y flyway\_schema\_history.
 
 ---
 
-## Configuración de bases de datos
+## Configuración
 
-El proyecto utiliza dos bases de datos distintas para optimizar el almacenamiento de distinta naturaleza:
+### Perfiles de Spring Boot
 
-### PostgreSQL 16
+Spring Boot permite cargar distintas configuraciones en función del perfil activo. El perfil por defecto es dev[13], cuya configuración se encuentra en application-dev.yml. Puedes crear otros archivos como application-prod.yml para producción y activarlos con:
 
-Se usa para la información estructurada (usuarios, encuestas, preguntas, opciones). La configuración de acceso está en `application-dev.yml` **[7]**. Al levantarse con Docker Compose, se establece:
-
-- **Nombre de la base:** `encuestas`
-- **Usuario:** `encuestas`
-- **Contraseña:** `encuestas`
-- **Puerto expuesto:** `5432`
-
-### MongoDB 7
-
-Destinada a almacenar las respuestas de las encuestas. Se configura en `application-dev.yml` mediante la URI:
-
-```
-mongodb://encuestas:encuestas@localhost:27017/encuestas?authSource=admin
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=prod
 ```
 
-Los datos se guardan en el contenedor `encuestas-mongo` usando el volumen `mongodata` **[8]**.
+### Variables de entorno y credenciales
+
+En desarrollo las credenciales están codificadas (usuario encuestas, contraseña encuestas tanto para Postgres como MongoDB). Nunca utilices estos valores en producción. En entorno productivo debes:
+
+1. Cambiar el secreto JWT (jwt.secret) y el tiempo de expiración en un archivo application-prod.yml o mediante variables de entorno[18].
+2. Configurar las URLs de PostgreSQL y MongoDB con usuarios y contraseñas seguros[19].
+3. Restringir el origen CORS a tu dominio de frontend. Puedes modificar allowed-origins en application.yml o exportar APP\_CORS\_ALLOWED\_ORIGINS para limitar los orígenes permitidos[20].
+
+### Personalización del puerto y contexto
+
+El puerto del servidor se define en application.yml o application-dev.yml (por defecto 8080). Puedes ajustarlo añadiendo `server.port=9000` al archivo de configuración o pasando `--server.port=9000` al ejecutar.
 
 ---
 
-## Migraciones con Flyway
+## Uso de la API
 
-Para mantener el esquema de PostgreSQL versionado y reproducible se emplea **Flyway**. Los scripts de migración se ubican en `backend/src/main/resources/db/migration/`. Cada archivo debe seguir el formato `V<versión>__<nombre>.sql`.
+Actualmente sólo están disponibles los endpoints de autenticación. Los futuros controladores para encuestas, preguntas y respuestas se implementarán próximamente. A continuación se describen los endpoints existentes:
 
-- La primera migración (`V1__init.sql`) crea las tablas y los índices principales **[6]**.
-- **Opcional:** existe una segunda migración (`V2__drop_redundant_unique_index.sql`) para eliminar un índice redundante (`ux_users_email`) en la tabla `users`, que puede añadirse más adelante.
+### Registro de usuario
+
+POST /api/auth/register – crea un nuevo usuario y devuelve un token de acceso.
+
+**Cuerpo de la solicitud (JSON):**
+
+```json
+{
+  "email": "usuario@example.com",
+  "password": "contraseñaSegura",
+  "role": "USER"
+}
+```
+
+**Respuesta exitosa (201 Created):**
+
+```json
+{
+  "token": "<jwt>"
+}
+```
+
+Si el correo ya existe, la API devuelve 409 Conflict[21].
+
+### Inicio de sesión
+
+POST /api/auth/login – valida las credenciales y retorna un token JWT.
+
+**Cuerpo de la solicitud (JSON):**
+
+```json
+{
+  "email": "usuario@example.com",
+  "password": "contraseñaSegura"
+}
+```
+
+**Respuesta exitosa (200 OK):**
+
+```json
+{
+  "token": "<jwt>"
+}
+```
+
+Si las credenciales son incorrectas o la cuenta está deshabilitada, se devuelve 401 Unauthorized[22].
+
+### Endpoints pendientes
+
+•	**Gestión de encuestas:** creación, listado y eliminación de encuestas (/api/surveys).
+•	**Gestión de preguntas y opciones:** asociar preguntas a encuestas y opciones a preguntas.
+•	**Envío de respuestas:** endpoint para que un usuario responda una encuesta, almacenando sus respuestas en MongoDB.
+
+Estas funcionalidades están **por completar;** se invita a la comunidad a colaborar en su implementación.
 
 ---
 
-## Perfiles y configuración
+## Estructura de carpetas
 
-Spring Boot permite definir distintos perfiles (por ejemplo, `dev`, `prod`, `test`) y cargar archivos de configuración específicos. En este proyecto:
+Ruta/archivo	Descripción
 
-- `application.yml` contiene la configuración común a todos los perfiles, incluida la propiedad `spring.application.name` y el perfil por defecto (`spring.profiles.default=dev`) **[9]**.
-- `application-dev.yml` define las propiedades para el perfil `dev`: URL JDBC, credenciales, ajustes de JPA y Flyway, URI de MongoDB y niveles de log **[5]**.
+docker-compose.yml	Compose file que orquesta los contenedores de PostgreSQL y MongoDB[17].
 
-En producción se debería crear un `application-prod.yml` con las credenciales reales, puertos distintos y variables seguras (por ejemplo, el secreto JWT se debe leer de variables de entorno). Los perfiles se pueden activar pasando el parámetro `--spring.profiles.active=prod` al arranque.
+backend/pom.xml	Archivo Maven que define las dependencias (Spring Boot, JPA, MongoDB, Security, Flyway, MapStruct, Lombok, JWT)[23].
 
----
+backend/mvnw y backend/mvnw\.cmd	Wrappers de Maven para no depender de una instalación global.
+backend/src/main/java/com/acme/encuestas	Código fuente de la aplicación. Incluye la clase principal, modelos, controladores, servicios, repositorios y configuración.
+backend/src/main/resources/application.yml	Configuración base de Spring Boot (nombre de la aplicación, perfil por defecto y CORS)[24].
 
-## Seguridad y JWT
+backend/src/main/resources/application-dev.yml	Configuración específica para desarrollo: credenciales de BD, Flyway, Swagger, JWT y niveles de log[25].
 
-El backend incluye **Spring Security** para proteger los endpoints. Se utiliza autenticación basada en **JSON Web Tokens (JWT)**, con ayuda de la biblioteca **JJWT**. El secreto y la duración del token se encuentran en `application-dev.yml` **[10]**; no deben reutilizarse en producción. Próximamente se incorporarán controladores para *login*, *registro* y protección por roles.
+backend/src/main/resources/db/migration/	Migraciones de Flyway con scripts SQL versionados[4].
 
----
+backend/src/test/java/...	Tests unitarios; actualmente sólo verifica la carga del contexto Spring[26].
 
-## Documentación de la API
-
-Para facilitar el uso y prueba de los endpoints REST, el proyecto integra **springdoc-openapi**. Al arrancar la aplicación, la especificación OpenAPI queda disponible en:
-
-- **JSON:** <http://localhost:8080/v3/api-docs>
-- **Swagger UI:** <http://localhost:8080/swagger-ui.html>
-
-Estas interfaces generan automáticamente la descripción de los recursos, métodos HTTP, parámetros y respuestas.
+No existe aún un directorio frontend/. Cuando se integre la aplicación Angular, deberá ubicarse en la raíz junto al backend.
 
 ---
 
-## Contribuciones
+## Pruebas
 
-Se trata de un proyecto abierto y en evolución. Las contribuciones son bienvenidas, ya sea reportando problemas, sugiriendo nuevas funcionalidades o enviando *pull requests*. Para colaborar:
+El proyecto incluye dependencias de **JUnit 5** y **Spring Boot Test**, pero sólo cuenta con una prueba básica que comprueba la carga del contexto[26]. Para ejecutar los tests:
 
-1. Haz un *fork* del repositorio y crea una rama a partir de `main`.
-2. Implementa tus mejoras y asegúrate de que el proyecto compila y los contenedores se levantan correctamente.
-3. Envía un *pull request* detallando los cambios realizados y su motivación.
+```bash
+cd backend
+./mvnw test
+```
 
----
-
-## Licencia
-
-El proyecto se ofrece **sin licencia explícita** en esta fase inicial. Esto significa que su uso está permitido con fines educativos o personales, pero no proporciona una garantía legal ni comercial. En futuras versiones se añadirá una licencia abierta (por ejemplo **MIT** o **Apache 2.0**) para favorecer su distribución y reutilización.
+Se anima a añadir pruebas unitarias y de integración para los servicios y controladores cuando se implementen. Herramientas como **Mockito** y **Spring Security Test** ya están declaradas en el pom.xml[27].
 
 ---
 
-Este README se generó de forma automatizada a partir de la configuración y los *scripts* presentes en la rama `main` del repositorio en **agosto de 2025**. Si detectas algún error o desactualización, no dudes en abrir una incidencia.
+## Despliegue
+
+### Entorno local
+
+En desarrollo, la manera recomendada es usar Docker Compose para bases de datos y ejecutar el backend desde el IDE o con ./mvnw spring-boot\:run. Puedes personalizar variables y puertos en application-dev.yml.
+
+### Producción
+
+Para un despliegue de producción debes:
+
+1. **Crear un perfil de producción (** application-prod.yml **)** con credenciales seguras, secreto JWT robusto y CORS restringido.
+2. **Empaquetar el backend como JAR** con ./mvnw -Pprod clean package (puedes definir un perfil Maven para producción). El JAR resultante (en target/) se ejecuta con java -jar encuestas-0.0.1-SNAPSHOT.jar.
+3. **Provisionar bases de datos** en un proveedor cloud (p. ej., Amazon RDS y Atlas) o mediante servicios gestionados en la nube. Ajusta las URL de conexión en la configuración.
+4. **Servir el frontend** (cuando exista) como aplicación estática o desplegarlo en un CDN.
+
+Opcionalmente puedes crear una imagen Docker del backend e integrarla en el docker-compose.yml para desplegar todo el stack junto.
 
 ---
 
-## Referencias
+## Solución de problemas
 
-[1] `docker-compose.yml`  
-<https://github.com/VictorAmadeu/encuestas/blob/main/docker-compose.yml>
+| Problema | Posible causa y solución |
+| --- | --- |
+| **La aplicación no arranca y muestra** Port 5432 is already in use | Otro proceso (otra base o contenedor) está usando el puerto 5432. Cambia el mapeo de puertos en docker-compose.yml (por ejemplo 5433:5432) y actualiza application-dev.yml en la URL JDBC. |
+| org.postgresql.util.PSQLException: FATAL: password authentication failed | Asegúrate de que los valores de POSTGRES_USER y POSTGRES_PASSWORD en docker-compose.yml coinciden con username y password en application-dev.yml[28]. Elimina los volúmenes (docker compose down -v) si modificas credenciales. |
+| **No se ejecutan las migraciones** | Confirma que Flyway está habilitado (spring.flyway.enabled=true en application-dev.yml[8]). Verifica que los scripts se encuentran en classpath:db/migration/ y tienen nombres V<version>__<descripcion>.sql. |
+| **Recibo** 401 Unauthorized **en endpoints privados** | Debes incluir un encabezado Authorization: Bearer <jwt> válido en la petición. Obtén el token mediante /api/auth/login o /api/auth/register. |
+| Invalid JWT signature **o expiración** | El token ha sido manipulado o caducado. Genera uno nuevo y, en producción, cambia el secreto JWT y limita el tiempo de validez[29]. |
 
-[2] `pom.xml`  
-<https://github.com/VictorAmadeu/encuestas/blob/main/backend/pom.xml>
+Para otros problemas, consulta los logs de la aplicación y de los contenedores (con docker compose logs).
 
-[3] `EncuestasApplication.java`  
-<https://github.com/VictorAmadeu/encuestas/blob/main/backend/src/main/java/com/acme/encuestas/EncuestasApplication.java>
+---
 
-[4] `application.yml`  
-<https://github.com/VictorAmadeu/encuestas/blob/main/backend/src/main/resources/application.yml>
+## Seguridad y buenas prácticas
 
-[5] `application-dev.yml`  
-<https://github.com/VictorAmadeu/encuestas/blob/main/backend/src/main/resources/application-dev.yml>
+Este proyecto ofrece un buen punto de partida, pero debe ajustarse a las mejores prácticas de seguridad antes de usarse en entornos reales:
 
-[6] `V1__init.sql`  
-<https://github.com/VictorAmadeu/encuestas/blob/main/backend/src/main/resources/db/migration/V1__init.sql>
+1. **Secrets:** nunca subas secretos o contraseñas al repositorio. Mueve el secreto JWT y las credenciales de bases de datos a variables de entorno o a un gestor de secretos en producción[18].
+2. **CORS:** define explícitamente los orígenes permitidos para la API en application.yml[20]. No uses \* en producción.
+3. **Roles y permisos:** revisa las reglas en SecurityConfig y define roles granulares. Usa anotaciones como @PreAuthorize en servicios para proteger operaciones sensibles.
+4. **Validez de los tokens:** la clase JwtUtil firma los tokens con HS256 y una clave Base64; considera usar claves rotativas y refresco de tokens para mayor seguridad[30].
+5. **Protección de datos:** implementa control de acceso para evitar que un usuario obtenga encuestas que no son suyas, o responda varias veces a la misma encuesta (ya existe un método existsBySurveyIdAndRespondentId en ResponseRepository[31] para prevenir envíos duplicados).
 
-[7] `application-dev.yml` (igual que [5])  
-<https://github.com/VictorAmadeu/encuestas/blob/main/backend/src/main/resources/application-dev.yml>
+---
 
-[8] `application-dev.yml` (igual que [5])  
-<https://github.com/VictorAmadeu/encuestas/blob/main/backend/src/main/resources/application-dev.yml>
+## Rendimiento y optimización
 
-[9] `application.yml` (igual que [4])  
-<https://github.com/VictorAmadeu/encuestas/blob/main/backend/src/main/resources/application.yml>
+Aunque el proyecto es pequeño, se pueden adoptar medidas para mejorar el rendimiento:
 
-[10] `application-dev.yml` (igual que [5])  
-<https://github.com/VictorAmadeu/encuestas/blob/main/backend/src/main/resources/application-dev.yml>
+•	**Lazily loaded collections:** las relaciones JPA (Survey.questions, Question.options) están definidas con fetch = LAZY para evitar cargar datos innecesarios[32]. Añade consultas específicas en los repositorios para evitar el n+1 problem.
+•	**Indices adecuados:** la migración inicial crea índices para búsquedas por email, propietario de la encuesta, preguntas por encuesta y opciones por pregunta[33].
+•	**Paginación y caché:** cuando se implementen los listados de encuestas, considera usar Pageable en Spring Data y cachés (Caffeine/Redis) para consultas frecuentes.
+
+---
+
+## Internacionalización y accesibilidad
+
+Actualmente no se incluyen mecanismos de internacionalización (i18n) ni accesibilidad. La futura aplicación Angular debería emplear las capacidades de i18n de Angular y seguir las normas WCAG. En el backend se pueden usar mensajes externalizados con messages.properties y la anotación @MessageSource. Esta sección está **por completar**.
+
+---
+
+## Roadmap y estado del proyecto
+
+El repositorio está en fase **experimental/educativa**. Las siguientes tareas clave se encuentran en el plan de trabajo:
+
+•	[ ] Implementar controladores REST para encuestas, preguntas y opciones.
+•	[ ] Crear servicios y casos de uso para la creación, actualización y eliminación de encuestas.
+•	[ ] Añadir un endpoint para enviar y almacenar respuestas en MongoDB y evitar duplicados utilizando ResponseRepository.existsBySurveyIdAndRespondentId[31].
+•	[ ] Desarrollar la aplicación Angular (frontend/) que consuma esta API.
+•	[ ] Añadir pruebas unitarias e integración que cubran autenticación, validaciones y lógica de negocio.
+•	[ ] Integrar CI/CD (GitHub Actions) y badges de estado en el README.
+•	[ ] Definir licencia abierta (MIT, Apache 2.0) y código de conducta.
+
+Si detectas otras mejoras o errores, abre un issue en GitHub describiendo el problema y la posible solución.
+
+---
+
+## Cómo contribuir
+
+¡Las contribuciones son bienvenidas! Sigue estos pasos para colaborar:
+
+1. **Fork del repositorio** en tu cuenta.
+2. Crea una **rama** a partir de main con un nombre descriptivo (feature/añadir-survey-endpoint).
+3. Implementa tus cambios asegurándote de que el proyecto compila (./mvnw clean package) y que las bases de datos se levantan correctamente.
+4. Realiza commits siguiendo, si lo deseas, la convención [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) para mejorar la legibilidad del historial.
+5. Envía un **pull request** detallando la funcionalidad añadida o el bug corregido. La revisión se realizará tan pronto como sea posible.
+
+Recuerda respetar el estilo de código: se utiliza **Lombok** para reducir el boilerplate y **MapStruct** para mapear entre entidades y DTO. Configura tu IDE para activar las anotaciones de Lombok y evitar errores de compilación.
+
+---
+
+## Código de conducta
+
+Este proyecto aún no incorpora un documento de código de conducta. Se recomienda adoptar el ([Contributor Covenant](https://www.contributor-covenant.org/es/version/2/1/code_of_conduct/)) en futuras versiones para garantizar un entorno colaborativo respetuoso y seguro. Hasta entonces, pedimos a todas las personas contribuidoras que actúen con profesionalidad y consideración hacia los demás.
+
+---
+
+## Licencia y créditos
+
+En el momento de redactar este documento, el repositorio **no especifica una licencia explícita**, por lo que se considera un proyecto de uso educativo o personal sin garantías[34]. Se recomienda añadir una licencia (como MIT o Apache 2.0) para facilitar la reutilización y protección legal.
+
+El proyecto fue iniciado por [VictorAmadeu](https://github.com/VictorAmadeu). Agradecemos las contribuciones de todas las personas que participan en su desarrollo y documentación. Cualquier marca o nombre registrado citado pertenece a sus respectivos propietarios.
+
+---
+
+[1] [11] User.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/model/User.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/model/User.java)
+
+[2] [21] [22] AuthService.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/service/AuthService.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/service/AuthService.java)
+
+[3] [29] [30] JwtUtil.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/security/JwtUtil.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/security/JwtUtil.java)
+
+[4] [33] V1\_\_init.sql
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/resources/db/migration/V1\_\_init.sql](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/resources/db/migration/V1__init.sql)
+
+[5] ResponseDocument.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/document/ResponseDocument.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/document/ResponseDocument.java)
+
+[6] JwtFilter.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/security/JwtFilter.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/security/JwtFilter.java)
+
+[7] SecurityConfig.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/config/SecurityConfig.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/config/SecurityConfig.java)
+
+[8] [9] [14] [18] [19] [25] [28] application-dev.yml
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/resources/application-dev.yml](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/resources/application-dev.yml)
+
+[10] EncuestasApplication.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/EncuestasApplication.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/EncuestasApplication.java)
+
+[12] [32] Survey.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/model/Survey.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/model/Survey.java)
+
+[13] [20] [24] application.yml
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/resources/application.yml](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/resources/application.yml)
+
+[15] DevSecurityConfig.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/config/DevSecurityConfig.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/config/DevSecurityConfig.java)
+
+[16] [17] docker-compose.yml
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/docker-compose.yml](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/docker-compose.yml)
+
+[23] [27] pom.xml
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/pom.xml](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/pom.xml)
+
+[26] EncuestasApplicationTests.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/test/java/com/acme/encuestas/EncuestasApplicationTests.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/test/java/com/acme/encuestas/EncuestasApplicationTests.java)
+
+[31] ResponseRepository.java
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/repository/ResponseRepository.java](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/backend/src/main/java/com/acme/encuestas/repository/ResponseRepository.java)
+
+[34] README.md
+[https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/README.md](https://github.com/VictorAmadeu/encuestas/blob/72cca42f0b7cfaade135ee532256c7be10198ae2/README.md)
+
+---
 
