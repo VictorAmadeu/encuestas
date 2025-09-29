@@ -27,12 +27,19 @@ Bienvenido al repositorio **encuestas**, una base para construir una plataforma 
 ## Características principales
 
 El backend proporciona una base sólida para desarrollar un sistema de encuestas completo. Entre sus principales características se incluyen:
+
 • **Gestión de usuarios:** el modelo User almacena email, contraseña cifrada (bcrypt), rol (p. ej. USER o ADMIN) y marcas de creación/modificación[1]. El endpoint de autenticación (/api/auth/login) permite iniciar sesión y devuelve un token JWT válido.
+
 • **Registro y autenticación con JWT:** los usuarios pueden registrarse mediante /api/auth/register, lo que crea un nuevo usuario y responde con un token JWT[2]. El token se firma utilizando la clave secreta definida en la configuración y contiene el identificador y el rol del usuario[3].
+
 • **Persistencia híbrida**:** la información estructural (usuarios, encuestas, preguntas y opciones) se almacena en PostgreSQL. El script de migración V1\_\_init.sql crea las tablas users, surveys, questions y options con sus relaciones e índices[4]. Las respuestas de las encuestas se guardan en la colección responses de MongoDB, representadas por los documentos ResponseDocument, AnswerDocument y MetaData[5].
+
 • **Seguridad basada en roles:** un filtro JWT (JwtFilter) intercepta cada petición, valida el token y establece la autenticación en el contexto de Spring[6]. La clase SecurityConfig declara reglas de acceso: rutas como /api/auth/**, /v3/api-docs/** o /swagger-ui/\*\* son públicas; los demás endpoints requieren autenticación y algunos exigen el rol ADMIN[7].
+
 • **Versionado de bases de datos con Flyway:** al arrancar la aplicación se ejecutan las migraciones SQL localizadas en backend/src/main/resources/db/migration/[4]. Flyway se configura en application-dev.yml para crear un esquema base y aplicar futuras actualizaciones[8].
+
 • **Documentación de la API:\*\* Springdoc-OpenAPI genera automáticamente la especificación OpenAPI y una interfaz Swagger UI accesible en /swagger-ui.html[9]. Esto facilita la prueba de los endpoints desde el navegador.
+
 
 **Nota:** en la fecha de elaboración de este documento no existe un módulo de frontend; sólo se ha implementado el módulo backend. Los futuros endpoints para gestionar encuestas, preguntas y respuestas aún se encuentran **por completar**.
 
