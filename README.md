@@ -47,7 +47,7 @@ El backend proporciona una base sólida para desarrollar un sistema de encuestas
 
 ## Arquitectura y estructura del proyecto
 
-Breve descripción
+### Breve descripción ####
 
 La aplicación implementa uma arquitetura clássica de **Spring Boot** organizada em camadas: controlador (REST), serviço (lógica de negocio), repositório (acesso a dados) e modelos/entidades. Para otimizar persistência e consultas, o projeto usa duas bases de dados especializadas:
 
@@ -64,7 +64,7 @@ graph TD
   D -- Respuestas (collections: responses) --> B
 ```
 
-Componentes y responsabilidades (rápido)
+#### Componentes y responsabilidades (rápido) ###
 
 - Backend (`backend/`): módulo Maven con el código Java. La clase principal `EncuestasApplication` arranca Spring Boot y carga los beans. Las entidades JPA principales son `User`, `Survey`, `Question` y `Option` (mappeadas a PostgreSQL).
 - Persistência relacional (PostgreSQL): almacena la estructura del dominio — usuarios, encuestas, preguntas y opciones. Las entidades JPA y las migraciones Flyway viven en `backend/src/main/resources/db/migration/`.
@@ -72,7 +72,7 @@ Componentes y responsabilidades (rápido)
 - Seguridad: `SecurityConfig` + `JwtFilter` implementan seguridad stateless con JWT. Para desarrollo hay un perfil alternativo (`DevSecurityConfig`) que desactiva restricciones cuando se necesita probar sin auth.
 - Infra & desarrollo: `docker-compose.yml` orquestra PostgreSQL e MongoDB com volumes persistentes. As credenciais e URLs usadas em dev estão em `backend/src/main/resources/application-dev.yml`.
 
-Arquivos chave e onde buscar
+### Arquivos chave e onde buscar ###
 
 - Código principal: `backend/src/main/java/com/acme/encuestas/EncuestasApplication.java`
 - Entidades JPA: `backend/src/main/java/com/acme/encuestas/model/`
@@ -81,14 +81,14 @@ Arquivos chave e onde buscar
 - Configurações: `backend/src/main/resources/application.yml` (base) e `application-dev.yml` (dev)
 - Migrações Flyway: `backend/src/main/resources/db/migration/V1__init.sql`
 
-Flujo de datos (essencial)
+### Flujo de datos (essencial) ###
 
 1. El cliente (futuro Angular) consume la API REST del backend.
 2. El backend usa JPA para operaciones CRUD sobre PostgreSQL (estructura y metadatos de encuestas).
 3. Cuando se guardan respuestas, se persisten como documentos en MongoDB para permitir esquemas flexibles y consultas agregadas.
 4. Flyway gestiona la evolución del esquema en PostgreSQL al arrancar la aplicación.
 
-Por qué este enfoque
+### Por qué este enfoque ###
 
 Usar PostgreSQL para el modelo relacional mantiene integridad referencial (encuestas, preguntas y opciones), mientras que MongoDB facilita almacenar respuestas con estructura variable y realizar agregaciones/consultas analíticas sin afectar el esquema relacional.
 
