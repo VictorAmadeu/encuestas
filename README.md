@@ -231,23 +231,41 @@ Estas funcionalidades están **por completar;** se invita a la comunidad a colab
 
 ## Estructura de carpetas
 
-Ruta/archivo Descripción
+Breve guía visual con los archivos y carpetas más relevantes del repositorio.
 
-docker-compose.yml Compose file que orquesta los contenedores de PostgreSQL y MongoDB[17].
+| Ruta / archivo                                   | Descripción                                                                                                           |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `docker-compose.yml`                             | Compose file que orquesta los contenedores de PostgreSQL y MongoDB [17].                                              |
+| `backend/pom.xml`                                | Archivo Maven que define las dependencias (Spring Boot, JPA, MongoDB, Security, Flyway, MapStruct, Lombok, JWT) [23]. |
+| `backend/mvnw`, `backend/mvnw.cmd`               | Wrappers de Maven para no depender de una instalación local.                                                          |
+| `backend/src/main/java/com/acme/encuestas`       | Código fuente de la aplicación: clase principal, modelos, controladores, servicios, repositorios y configuración.     |
+| `backend/src/main/resources/application.yml`     | Configuración base (nombre de la aplicación, perfil por defecto y CORS) [24].                                         |
+| `backend/src/main/resources/application-dev.yml` | Configuración de desarrollo: credenciales de BD, Flyway, Swagger, JWT y niveles de log [25].                          |
+| `backend/src/main/resources/db/migration/`       | Migraciones Flyway (scripts SQL versionados) [4].                                                                     |
+| `backend/src/test/java/...`                      | Tests unitarios; actualmente sólo comprueba la carga del contexto Spring [26].                                        |
 
-backend/pom.xml Archivo Maven que define las dependencias (Spring Boot, JPA, MongoDB, Security, Flyway, MapStruct, Lombok, JWT)[23].
+Árbol de ejemplo (raíz del repo):
 
-backend/mvnw y backend/mvnw\.cmd Wrappers de Maven para no depender de una instalación global.
-backend/src/main/java/com/acme/encuestas Código fuente de la aplicación. Incluye la clase principal, modelos, controladores, servicios, repositorios y configuración.
-backend/src/main/resources/application.yml Configuración base de Spring Boot (nombre de la aplicación, perfil por defecto y CORS)[24].
+```text
+.
+├─ docker-compose.yml
+├─ backend/
+│  ├─ mvnw
+│  ├─ mvnw.cmd
+│  ├─ pom.xml
+│  └─ src/
+│     ├─ main/
+│     │  ├─ java/com/acme/encuestas/...
+│     │  └─ resources/
+│     │     ├─ application.yml
+│     │     ├─ application-dev.yml
+│     │     └─ db/migration/V1__init.sql
+│     └─ test/
+│        └─ java/...
+└─ frontend/  (aún no existe — cuando se añada, debe ubicarse aquí)
+```
 
-backend/src/main/resources/application-dev.yml Configuración específica para desarrollo: credenciales de BD, Flyway, Swagger, JWT y niveles de log[25].
-
-backend/src/main/resources/db/migration/ Migraciones de Flyway con scripts SQL versionados[4].
-
-backend/src/test/java/... Tests unitarios; actualmente sólo verifica la carga del contexto Spring[26].
-
-No existe aún un directorio frontend/. Cuando se integre la aplicación Angular, deberá ubicarse en la raíz junto al backend.
+Pequeña nota: se conservan las referencias numéricas ([n]) que apuntan a recursos y archivos del README.
 
 ---
 
