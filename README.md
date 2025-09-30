@@ -228,7 +228,9 @@ Si las credenciales son incorrectas o la cuenta está deshabilitada, se devuelve
 ### Endpoints pendientes
 
 • **Gestión de encuestas:** creación, listado y eliminación de encuestas (/api/surveys).
+
 • **Gestión de preguntas y opciones:** asociar preguntas a encuestas y opciones a preguntas.
+
 • **Envío de respuestas:** endpoint para que un usuario responda una encuesta, almacenando sus respuestas en MongoDB.
 
 Estas funcionalidades están **por completar;** se invita a la comunidad a colaborar en su implementación.
@@ -338,7 +340,9 @@ Este proyecto ofrece un buen punto de partida, pero debe ajustarse a las mejores
 Aunque el proyecto es pequeño, se pueden adoptar medidas para mejorar el rendimiento:
 
 • **Lazily loaded collections:** las relaciones JPA (Survey.questions, Question.options) están definidas con fetch = LAZY para evitar cargar datos innecesarios[32]. Añade consultas específicas en los repositorios para evitar el n+1 problem.
+
 • **Indices adecuados:** la migración inicial crea índices para búsquedas por email, propietario de la encuesta, preguntas por encuesta y opciones por pregunta[33].
+
 • **Paginación y caché:** cuando se implementen los listados de encuestas, considera usar Pageable en Spring Data y cachés (Caffeine/Redis) para consultas frecuentes.
 
 ---
@@ -354,11 +358,17 @@ Actualmente no se incluyen mecanismos de internacionalización (i18n) ni accesib
 El repositorio está en fase **experimental/educativa**. Las siguientes tareas clave se encuentran en el plan de trabajo:
 
 • [ ] Implementar controladores REST para encuestas, preguntas y opciones.
+
 • [ ] Crear servicios y casos de uso para la creación, actualización y eliminación de encuestas.
+
 • [ ] Añadir un endpoint para enviar y almacenar respuestas en MongoDB y evitar duplicados utilizando ResponseRepository.existsBySurveyIdAndRespondentId[31].
+
 • [ ] Desarrollar la aplicación Angular (frontend/) que consuma esta API.
+
 • [ ] Añadir pruebas unitarias e integración que cubran autenticación, validaciones y lógica de negocio.
+
 • [ ] Integrar CI/CD (GitHub Actions) y badges de estado en el README.
+
 • [ ] Definir licencia abierta (MIT, Apache 2.0) y código de conducta.
 
 Si detectas otras mejoras o errores, abre un issue en GitHub describiendo el problema y la posible solución.
