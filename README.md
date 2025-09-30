@@ -48,7 +48,7 @@ El backend proporciona una base sólida para desarrollar un sistema de encuestas
 
 ### Breve descripción
 
-La aplicación implementa uma arquitetura clássica de **Spring Boot** organizada em camadas: controlador (REST), serviço (lógica de negocio), repositório (acesso a dados) e modelos/entidades. Para otimizar persistência e consultas, o projeto usa duas bases de dados especializadas:
+La aplicación implementa una arquitectura clásica de **Spring Boot** organizada en capas: controlador (REST), servicio (lógica de negocio), repositorio (acceso a datos) y modelos/entidades. Para optimizar la persistencia y las consultas, el proyecto usa dos bases de datos especializadas:
 
 ```
 graph TD
@@ -65,22 +65,22 @@ graph TD
 
 #### Componentes y responsabilidades (rápido)
 
-- Backend (`backend/`): módulo Maven con el código Java. La clase principal `EncuestasApplication` arranca Spring Boot y carga los beans. Las entidades JPA principales son `User`, `Survey`, `Question` y `Option` (mappeadas a PostgreSQL).
-- Persistência relacional (PostgreSQL): almacena la estructura del dominio — usuarios, encuestas, preguntas y opciones. Las entidades JPA y las migraciones Flyway viven en `backend/src/main/resources/db/migration/`.
-- Persistência documental (MongoDB): guarda las respuestas de encuestas en la colección `responses` mediante documentos (`ResponseDocument`, `AnswerDocument`, `MetaData`) para consultas agregadas y almacenamiento flexible.
+- Backend (`backend/`): módulo Maven con el código Java. La clase principal `EncuestasApplication` arranca Spring Boot y carga los beans. Las entidades JPA principales son `User`, `Survey`, `Question` y `Option` (mapeadas a PostgreSQL).
+- Persistencia relacional (PostgreSQL): almacena la estructura del dominio — usuarios, encuestas, preguntas y opciones. Las entidades JPA y las migraciones Flyway viven en `backend/src/main/resources/db/migration/`.
+- Persistencia documental (MongoDB): guarda las respuestas de encuestas en la colección `responses` mediante documentos (`ResponseDocument`, `AnswerDocument`, `MetaData`) para consultas agregadas y almacenamiento flexible.
 - Seguridad: `SecurityConfig` + `JwtFilter` implementan seguridad stateless con JWT. Para desarrollo hay un perfil alternativo (`DevSecurityConfig`) que desactiva restricciones cuando se necesita probar sin auth.
-- Infra & desarrollo: `docker-compose.yml` orquestra PostgreSQL e MongoDB com volumes persistentes. As credenciais e URLs usadas em dev estão em `backend/src/main/resources/application-dev.yml`.
+- Infraestructura y desarrollo: `docker-compose.yml` orquesta PostgreSQL y MongoDB con volúmenes persistentes. Las credenciales y URLs usadas en desarrollo están en `backend/src/main/resources/application-dev.yml`.
 
-### Arquivos chave e onde buscar
+### Archivos clave y dónde buscar
 
 - Código principal: `backend/src/main/java/com/acme/encuestas/EncuestasApplication.java`
 - Entidades JPA: `backend/src/main/java/com/acme/encuestas/model/`
 - Documentos MongoDB: `backend/src/main/java/com/acme/encuestas/document/`
-- Repositórios: `backend/src/main/java/com/acme/encuestas/repository/`
-- Configurações: `backend/src/main/resources/application.yml` (base) e `application-dev.yml` (dev)
-- Migrações Flyway: `backend/src/main/resources/db/migration/V1__init.sql`
+- Repositorios: `backend/src/main/java/com/acme/encuestas/repository/`
+- Configuraciones: `backend/src/main/resources/application.yml` (base) y `application-dev.yml` (desarrollo)
+- Migraciones Flyway: `backend/src/main/resources/db/migration/V1__init.sql`
 
-### Flujo de datos (essencial)
+### Flujo de datos (esencial)
 
 1. El cliente (futuro Angular) consume la API REST del backend.
 2. El backend usa JPA para operaciones CRUD sobre PostgreSQL (estructura y metadatos de encuestas).
